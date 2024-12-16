@@ -1,7 +1,12 @@
 # MDP Project: Angry Birds Simulation
 
-## Overview
 This project implements a Markov Decision Process (MDP) to solve a problem inspired by the *Angry Birds* game. The goal is to design an agent that can navigate a stochastic grid-based environment, interact with elements such as pigs and eggs, and maximize its score using an optimal policy.
+
+<br>
+
+https://github.com/user-attachments/assets/caa1ac9f-c9df-4ffc-ab00-b7b876379b92
+
+<br>
 
 ## Environment
 The environment is a stochastic 8x8 grid with various elements:
@@ -14,6 +19,8 @@ The environment is a stochastic 8x8 grid with various elements:
 
 The agent can move up, down, left, or right, but due to stochasticity, it may not always move in the intended direction. Each action has an associated reward or penalty, which is determined by proximity to pigs, eggs, or obstacles.
 
+<br>
+
 ## Features
 - **Dynamic Grid Environment**
 - **Algorithms**:
@@ -25,6 +32,7 @@ The agent can move up, down, left, or right, but due to stochasticity, it may no
 - **Logging**:
   - Logs rewards, policies, and value tables for debugging and analysis.
 
+<br>
 
 ### How to Run
 1. Clone the repository:
@@ -43,6 +51,7 @@ The agent can move up, down, left, or right, but due to stochasticity, it may no
    ```
 4. Check the generated logs in the `logs` directory and visualizations in the `plot` directory.
 
+<br>
 
 ## Files
 - `main.py`: Entry point for running the simulation.
@@ -52,6 +61,7 @@ The agent can move up, down, left, or right, but due to stochasticity, it may no
 - `const.py`: Contains constants such as grid size, FPS and rewards.
 - `util.py`: Contains utility functions and datastructures for the Angry Birds MDP.
 
+<br>
 
 ## License
 This project is licensed under the Apache License v2.0 License. See the `LICENSE` file for details.
