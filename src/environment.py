@@ -87,7 +87,7 @@ class AngryBirds:
         self.grid = copy.deepcopy(self.__base_grid)
         self.reward = 0
         self.done = False
-        self.reward_map = self.reward_function()
+        self.reward_map = self.__reward_function(self.__agent_pos)
         self.transition_table = self.__calculate_transition_model(self.__grid_size, self.__probability_dict,
                                                                   self.reward_map)
 
@@ -301,31 +301,36 @@ class AngryBirds:
             pygame.draw.line(screen, (0, 0, 0), (c * self.__tile_size, 0),
                              (c * self.__tile_size, self.__grid_size * self.__tile_size), 2)
 
-    def reward_function(self) -> List[List[int]]:
+    def __reward_function(self, current_state: Tuple[int, int]) -> List[List[int]]:
         """
         Computes the reward map for the environment.
 
+        Args:
+            current_state (Tuple[int, int])
         Returns:
             List[List[int]]: The reward map for each grid cell.
         """
         eggs_pos = (7, 7)
-        pig_pos = None
-        max_distance = 0
+        goal_pos = None
+        min_distance = 14
 
-        for i in range(self.__grid_size):
-            for j in range(self.__grid_size):
+        for i in range(8):
+            for j in range(8):
                 if self.grid[i][j] == 'P':  # Pig
-                    d = manhattan_distance((i, j), eggs_pos)
-                    if d > max_distance:
-                        pig_pos = (i, j)
-                        max_distance = d
+                    d = manhattan_distance((i, j), current_state)
+                    if d < min_distance:
+                        goal_pos = (i, j)
+                        min_distance = d
+
+        if goal_pos is None:
+            goal_pos = eggs_pos
 
         reward_table = [[0 for _ in range(self.__grid_size)] for _ in range(self.__grid_size)]
 
         # Populate static rewards based on the grid
         for i in range(self.__grid_size):
             for j in range(self.__grid_size):
-                if (i, j) == pig_pos:
+                if (i, j) == goal_pos:
                     reward_table[i][j] = 1000
                 elif self.grid[i][j] == 'P':  # Pig
                     reward_table[i][j] = 250
@@ -336,7 +341,7 @@ class AngryBirds:
                 elif self.grid[i][j] == 'R':  # W
                     reward_table[i][j] = None  # Impassable
 
-        # UCS Search initialization
+        # A* Search initialization
         initial_pos = (0, 0)
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
@@ -348,15 +353,15 @@ class AngryBirds:
             current_pos, path = frontiers.pop()
             x, y = current_pos
 
-            if (x, y) == pig_pos:
+            if (x, y) == goal_pos:
                 result = [[0 for _ in range(self.__grid_size)] for _ in range(self.__grid_size)]
 
                 for i in range(self.__grid_size):
                     for j in range(self.__grid_size):
                         if (i, j) in reached_states:
-                            result[i][j] = max(reached_states[(i, j)], (14 - manhattan_distance((i, j), pig_pos)) * 10)
+                            result[i][j] = max(reached_states[(i, j)], (14 - manhattan_distance((i, j), goal_pos)) * 10)
                         elif reward_table[i][j] is not None:
-                            result[i][j] = reward_table[i][j] + (14 - manhattan_distance((i, j), pig_pos)) * 10
+                            result[i][j] = reward_table[i][j] + (14 - manhattan_distance((i, j), goal_pos)) * 10
 
                 for x, y in path:
                     result[x][y] += 100
@@ -378,7 +383,7 @@ class AngryBirds:
                             reward_table[nx][ny] = 0
                         reached_states[next_pos] = new_reward
                         # frontiers.push((nx, ny), -new_reward + (manhattan_distance((nx, ny), goal_pos) * 10))
-                        frontiers.push((next_pos, path + [next_pos]), -new_reward + (manhattan_distance(next_pos, pig_pos)) * 10)
+                        frontiers.push((next_pos, path + [next_pos]), -new_reward + (manhattan_distance(next_pos, goal_pos)) * 10)
 
         raise Exception("Failed to calculate rewards for actions")
 
@@ -431,6 +436,20 @@ class AngryBirds:
                                 (neighbor_probability, state, reward_map[row][col]))
 
         return transition_table
+
+    def update_transition_table(self, current_state: Tuple[int, int]) -> None:
+        self.reward_map = self.__reward_function(current_state)
+
+        for i in range(8):
+            for j in range(8):
+                for a in range(4):
+                    possible_outcome = self.transition_table[(i, j)][a]
+                    updated_values = []
+
+                    for (probability, next_state, _) in possible_outcome:
+                        updated_values.append((probability, next_state, self.reward_map[i][j]))
+
+                    self.transition_table[(i, j)][a] = updated_values
 
     @classmethod
     def __is_path_exists(cls, grid: List[List[str]], start: Tuple[int, int], goal: Tuple[int, int]) -> bool:
